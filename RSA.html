@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSA Cypher</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('menu_background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            margin: 50px auto; /* Changed margin-top from 20px to 50px */
+        }
+
+
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: calc(100% - 22px);
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4A00E0;
+            color: #FFFFFF;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #2c007d;
+        }
+
+        .result-box {
+            width: 100%;
+            height: 70px; /* Adjust the height as needed */
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            overflow-y: auto; /* Add this line to enable vertical scrollbar */
+            margin-top: 20px;
+            resize: vertical; /* Allow vertical resizing */
+            word-wrap: break-word; /* Add this line to break long words into multiple lines */
+        }
+
+        .download-link {
+            padding: 10px 20px;
+            background-color: #4A00E0;
+            color: #FFFFFF;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 10px;
+            display: none; /* Initially hide the download link */
+            text-decoration: none; /* Remove default underline */
+            text-align: center; /* Center the text */
+        }
+
+        .download-link:hover {
+            background-color: #2c007d;
+        }
+
+        .chart-container {
+            margin-top: 50px; /* Reduce margin at the top */
+            margin: 50px 20px; /* Adjusted margin */
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.5);
+            overflow-y: auto;
+            height: 500px;
+            width: 800px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RSA Cypher</h1>
+        <!-- Text input field for text input -->
+        <label for="message">Message:</label>
+        <input type="text" id="message"><br>
+        
+        <!-- File input field for uploading files -->
+        <input type="file" id="fileInput"><br>
+        
+        <!-- Buttons for encryption and decryption -->
+        <button onclick="generateKeyPair()">Generate RSA Key Pair</button>
+        <button onclick="encryptText()">Encrypt Text</button>
+        <button onclick="decryptText()">Decrypt Text</button>
+        <button onclick="encryptFile()">Encrypt File</button>
+        <button onclick="decryptFile()">Decrypt File</button>
+        
+        <!-- Result display -->
+        <textarea class="result-box" id="resultBox" readonly></textarea> <!-- Use textarea instead of div -->
+        <a id="downloadLink" class="download-link" download>Download</a> <!-- Download link -->
+    </div>
+    <!-- Graph Container -->
+    <div class="chart-container">
+        <canvas id="performanceChart"></canvas>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let encryptionTimes = [];
+        let decryptionTimes = [];
+        let operationLabels = [];
+        let publicKey, privateKey;
+        
+        function updateGraph(operation, time) {
+            operationLabels.push(operation);
+            if (operation.includes('Encrypt Text') || operation.includes('Encrypt File')) {
+                encryptionTimes.push(time);
+            } else {
+                decryptionTimes.push(time);
+            }
+            performanceChart.data.labels = operationLabels;
+            performanceChart.data.datasets[0].data = encryptionTimes;
+            performanceChart.data.datasets[1].data = decryptionTimes;
+            performanceChart.update();
+        }
+    
+        function generateKeyPair() {
+            window.crypto.subtle.generateKey(
+                {
+                    name: "RSA-OAEP",
+                    modulusLength: 2048, // Can be 1024, 2048, or 4096
+                    publicExponent: new Uint8Array([1, 0, 1]),
+                    hash: {name: "SHA-256"}
+                },
+                true,
+                ["encrypt", "decrypt"]
+            )
+            .then(function(keyPair){
+                publicKey = keyPair.publicKey;
+                privateKey = keyPair.privateKey;
+                document.getElementById('resultBox').innerText = 'RSA Key Pair Generated';
+            })
+            .catch(function(err){
+                console.error(err);
+                document.getElementById('resultBox').innerText = 'Error Generating RSA Key Pair';
+            });
+        }
+    
+        function encryptText() {
+    const startTime = performance.now();
+    const message = document.getElementById('message').value;
+    window.crypto.subtle.encrypt(
+        {
+            name: "RSA-OAEP"
+        },
+        publicKey,
+        new TextEncoder().encode(message)
+    )
+    .then(function(encrypted){
+        const endTime = performance.now();
+        const executionTime = endTime - startTime;
+        updateGraph('Encrypt Text', executionTime);
+        const encryptedMessage = btoa(String.fromCharCode.apply(null, new Uint8Array(encrypted)));
+        document.getElementById('resultBox').textContent = 'Encrypted Text: ' + encryptedMessage;
+
+        showDownloadLink(encryptedMessage, 'encrypt');
+        
+        const logEntry = {
+            method: 'Text',
+            action: 'encrypt',
+            time: executionTime
+        };
+        saveLogEntry(logEntry, executionTime);
+    })
+    .catch(function(err){
+        console.error(err);
+        document.getElementById('resultBox').textContent = 'Error Encrypting Text';
+    });
+}
+
+function decryptText() {
+    const encryptedMessage = document.getElementById('message').value;
+    const encryptedData = new Uint8Array(atob(encryptedMessage).split('').map(char => char.charCodeAt(0)));
+    const startTime = performance.now();
+    window.crypto.subtle.decrypt(
+        {
+            name: "RSA-OAEP"
+        },
+        privateKey,
+        encryptedData
+    )
+    .then(function(decrypted){
+        const endTime = performance.now();
+        const executionTime = endTime - startTime;
+        updateGraph('Decrypt Text', executionTime);
+        const decryptedMessage = new TextDecoder().decode(decrypted);
+        document.getElementById('resultBox').innerText = 'Decrypted Text: ' + decryptedMessage;
+        showDownloadLink(decryptedMessage, 'decrypt');
+        
+        const logEntry = {
+            method: 'Text',
+            action: 'decrypt',
+            time: executionTime
+        };
+        saveLogEntry(logEntry, executionTime);
+    })
+    .catch(function(err){
+        console.error(err);
+        document.getElementById('resultBox').innerText = 'Error Decrypting Text';
+    });
+}
+
+function encryptFile() {
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+            const content = event.target.result; // Content of the file
+            const startTime = performance.now();
+
+            window.crypto.subtle.encrypt(
+                { name: "RSA-OAEP" },
+                publicKey,
+                content
+            )
+            .then(function(encrypted){
+                const endTime = performance.now();
+                const executionTime = endTime - startTime;
+                updateGraph('Encrypt File', executionTime);
+
+                const encryptedContent = new Blob([encrypted], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(encryptedContent);
+                const filename = file.name + '.encrypted';
+
+                document.getElementById('resultBox').innerText = 'Encrypted File: ' + filename;
+                document.getElementById('downloadLink').href = url;
+                document.getElementById('downloadLink').download = filename;
+                document.getElementById('downloadLink').style.display = 'block';
+                
+                const logEntry = {
+                    method: 'File',
+                    action: 'encrypt',
+                    time: executionTime
+                };
+                saveLogEntry(logEntry, executionTime);
+            })
+            .catch(function(err){
+                console.error(err);
+                document.getElementById('resultBox').innerText = 'Error Encrypting File';
+            });
+        };
+
+        reader.readAsArrayBuffer(file);
+    }
+}
+
+function decryptFile() {
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const content = event.target.result; // Content of the file
+            const startTime = performance.now();
+
+            window.crypto.subtle.decrypt(
+                { name: "RSA-OAEP" },
+                privateKey,
+                content
+            )
+            .then(function(decrypted){
+                const endTime = performance.now();
+                const executionTime = endTime - startTime;
+                updateGraph('Decrypt File', executionTime);
+
+                const decryptedContent = new Blob([decrypted], { type: file.type });
+                const url = URL.createObjectURL(decryptedContent);
+                const filename = file.name.replace('.encrypted', '');
+
+                document.getElementById('resultBox').innerText = 'Decrypted File: ' + filename;
+                document.getElementById('downloadLink').href = url;
+                document.getElementById('downloadLink').download = filename;
+                document.getElementById('downloadLink').style.display = 'block';
+                
+                const logEntry = {
+                    method: 'File',
+                    action: 'decrypt',
+                    time: executionTime
+                };
+                saveLogEntry(logEntry, executionTime);
+            })
+            .catch(function(err){
+                console.error(err);
+                document.getElementById('resultBox').innerText = 'Error Decrypting File';
+            });
+        };
+
+        reader.readAsArrayBuffer(file);
+    }
+}
+
+
+
+
+        function showDownloadLink(content, action) {
+            const downloadLink = document.getElementById('downloadLink');
+            if (downloadLink) {
+                downloadLink.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+                if (action === 'encrypt') {
+                    downloadLink.download = 'encrypted_text.txt';
+                } else if (action === 'decrypt') {
+                    downloadLink.download = 'decrypted_text.txt';
+                }
+                downloadLink.style.display = 'block';
+            } else {
+                console.error('Download link element not found.');
+            }
+        }
+    
+        let ctx = document.getElementById('performanceChart').getContext('2d');
+        let performanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: operationLabels,
+                datasets: [{
+                    label: 'Encryption Time (ms)',
+                    backgroundColor: 'rgb(54, 162, 235)', // Blue for encryption
+                    borderColor: 'rgb(54, 162, 235)', // Blue for encryption
+                    data: encryptionTimes,
+                    fill: false,
+                    tension: 0.1
+                }, {
+                    label: 'Decryption Time (ms)',
+                    backgroundColor: 'rgb(255, 99, 132)', // Red for decryption
+                    borderColor: 'rgb(255, 99, 132)', // Red for decryption
+                    data: decryptionTimes,
+                    fill: false,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Time (ms)',
+                            color: 'black'
+                        },
+                        ticks: {
+                            color: 'black'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Execution',
+                            color: 'black'
+                        },
+                        ticks: {
+                            color: 'black',
+                            callback: function(value, index, values) {
+                                return 'Execution ' + (index + 1);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'black'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Execution Time',
+                        color: 'black',
+                        font: {
+                            size: 18
+                        }
+                    }
+                }
+            }
+        });
+
+        function saveLogEntry(logEntry, executionTime) {
+    // Retrieve existing log entries from local storage, or initialize an empty array if none exist
+    const logEntries = JSON.parse(localStorage.getItem('RSA_Cypher')) || [];
+    logEntry.time = executionTime; // Assign the executionTime to the logEntry object
+    logEntries.push(logEntry);
+    localStorage.setItem('RSA_Cypher', JSON.stringify(logEntries));
+}
+
+    </script>
+</body>
+</html>

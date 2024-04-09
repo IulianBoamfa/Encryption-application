@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCM Encryption and Decryption</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('menu_background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            margin: 20px auto;
+            margin-left: 90px
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        input[type="password"], input[type="text"] {
+            padding: 10px;
+            width: calc(100% - 22px);
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4A00E0;
+            color: #FFFFFF;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #2c007d;
+        }
+
+        p {
+            margin-top: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .download-button {
+            margin-top: 10px;
+        }
+
+        .chart-container {
+            margin-top: 100px;
+            margin: 50px auto ;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.5);
+            overflow-y: auto;
+            height: 500px;
+            width: 800px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GCM Encryption and Decryption</h1>
+        <label for="password">Password:</label>
+        <input type="password" id="password" required><br>
+        <label for="clear_text">Clear Text:</label>
+        <input type="text" id="clear_text"><br>
+        <input type="file" id="fileInput"><br>
+        <button onclick="encrypt()">Encrypt Text</button>
+        <button onclick="decrypt()">Decrypt Text</button>
+        <button onclick="encryptFile()">Encrypt File</button>
+        <button onclick="decryptFile()">Decrypt File</button>
+        <p id="result"></p>
+        <a id="downloadLink" class="download-button" style="display: none;" download>
+            <button class="download-button">Download File</button>
+        </a>
+    </div>
+    <div class="chart-container">
+        <canvas id="performanceChart"></canvas>
+    </div>
+    <script>
+        let encryptionTimes = [];
+        let decryptionTimes = [];
+        let operationLabels = [];
+    
+        let ctx = document.getElementById('performanceChart').getContext('2d');
+        let performanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Encryption Time (ms)',
+                    backgroundColor: 'rgb(54, 162, 235)',
+                    borderColor: 'rgb(54, 162, 235)',
+                    data: [],
+                    fill: false,
+                    tension: 0.1
+                }, {
+                    label: 'Decryption Time (ms)',
+                    backgroundColor: 'rgb(255, 99, 132)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    data: [],
+                    fill: false,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Time (ms)',
+                            color: 'black'
+                        },
+                        ticks: {
+                            color: 'black'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Execution',
+                            color: 'black'
+                        },
+                        ticks: {
+                            color: 'black',
+                            callback: function(value, index, values) {
+                                return 'Execution ' + (index + 1);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'black'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Execution Time',
+                        color: 'black',
+                        font: {
+                            size: 18
+                        }
+                    }
+                }
+            }
+        });
+    
+        function updateGraph(operation, time) {
+            operationLabels.push(operation);
+            if (operation.includes('Encrypt')) {
+                encryptionTimes.push(time);
+                decryptionTimes.push(null);
+            } else {
+                decryptionTimes.push(time);
+                encryptionTimes.push(null);
+            }
+            performanceChart.data.labels = operationLabels;
+            performanceChart.data.datasets[0].data = encryptionTimes;
+            performanceChart.data.datasets[1].data = decryptionTimes;
+            performanceChart.update();
+        }
+    
+        function showDownloadLink(content, action) {
+            const downloadLink = document.getElementById('downloadLink');
+            downloadLink.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+            if (action === 'encrypt') {
+                downloadLink.download = 'encrypted_data.txt';
+            } else if (action === 'decrypt') {
+                downloadLink.download = 'decrypted_data.txt';
+            }
+            downloadLink.style.display = 'block';
+        }
+    
+        async function encrypt() {
+            const password = document.getElementById('password').value;
+            const clearText = document.getElementById('clear_text').value;
+            try {
+                const startTime = performance.now();
+                const encodedPassword = new TextEncoder().encode(password);
+                const encodedClearText = new TextEncoder().encode(clearText);
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const encryptedData = await window.crypto.subtle.encrypt(
+                    {
+                        name: 'AES-GCM',
+                        iv: iv
+                    },
+                    await window.crypto.subtle.importKey(
+                        'raw',
+                        encodedPassword,
+                        { name: 'AES-GCM' },
+                        false,
+                        ['encrypt']
+                    ),
+                    encodedClearText
+                );
+                const endTime = performance.now();
+                const executionTime = endTime - startTime;
+                updateGraph('Encrypt Text', executionTime);
+                const encryptedArray = new Uint8Array(encryptedData);
+                const cipherText = new Uint8Array(iv.length + encryptedArray.length);
+                cipherText.set(iv, 0);
+                cipherText.set(encryptedArray, iv.length);
+                const cipherTextBase64 = btoa(String.fromCharCode(...cipherText));
+                document.getElementById('result').innerText = 'Encrypted Text: ' + cipherTextBase64;
+                showDownloadLink(cipherTextBase64, 'encrypt');
+            } catch (error) {
+                console.error("Encryption error:", error);
+                alert("Encryption failed. See console for details. Make sure you use a 128 bit password: Fj$2Lm#9A!q3zRp*");
+            }
+        }
+    
+        async function decrypt() {
+            const password = document.getElementById('password').value;
+            const cipherTextBase64 = document.getElementById('clear_text').value;
+            try {
+                const startTime = performance.now();
+                const encodedPassword = new TextEncoder().encode(password);
+                const cipherText = new Uint8Array(atob(cipherTextBase64).split('').map(c => c.charCodeAt(0)));
+                const iv = cipherText.slice(0, 12);
+                const encryptedData = cipherText.slice(12);
+                const decryptedData = await window.crypto.subtle.decrypt(
+                    {
+                        name: 'AES-GCM',
+                        iv: iv
+                    },
+                    await window.crypto.subtle.importKey(
+                        'raw',
+                        encodedPassword,
+                        { name: 'AES-GCM' },
+                        false,
+                        ['decrypt']
+                    ),
+                    encryptedData
+                );
+                const decryptedArray = new Uint8Array(decryptedData);
+                const decryptedText = new TextDecoder().decode(decryptedArray);
+                const endTime = performance.now();
+                const executionTime = endTime - startTime;
+                updateGraph('Decrypt Text', executionTime);
+                document.getElementById('result').innerText = 'Decrypted Text: ' + decryptedText;
+                showDownloadLink(decryptedText, 'decrypt');
+            } catch (error) {
+                console.error("Decryption error:", error);
+                alert("Decryption failed. See console for details. Make sure you use a 128 bit password: Fj$2Lm#9A!q3zRp*");
+            }
+        }
+    
+        async function encryptFile() {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    try {
+                        const password = document.getElementById('password').value;
+                        const startTime = performance.now();
+                        const content = new Uint8Array(event.target.result);
+                        const encryptedContent = await gcmEncryptForFile(content, password);
+                        const endTime = performance.now();
+                        const executionTime = endTime - startTime;
+                        updateGraph('Encrypt File', executionTime);
+                        const blob = new Blob([encryptedContent], { type: 'application/octet-stream' });
+                        const filename = file.name + '.encrypted';
+                        document.getElementById('result').innerText = 'Encrypted File: ' + filename;
+                        updateDownloadLink(blob, filename);
+                    } catch (error) {
+                        console.error("Encryption error:", error);
+                        alert("Encryption failed. See console for details. Make sure you use a 128 bit password: Fj$2Lm#9A!q3zRp*");
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+    
+        async function decryptFile() {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    try {
+                        const password = document.getElementById('password').value;
+                        const startTime = performance.now();
+                        const content = new Uint8Array(event.target.result);
+                        const decryptedContent = await gcmDecryptForFile(content, password);
+                        const endTime = performance.now();
+                        const executionTime = endTime - startTime;
+                        updateGraph('Decrypt File', executionTime);
+                        const blob = new Blob([decryptedContent], { type: 'application/octet-stream' });
+                        const filename = file.name.replace('.encrypted', '');
+                        document.getElementById('result').innerText = 'Decrypted File: ' + filename;
+                        updateDownloadLink(blob, filename);
+                    } catch (error) {
+                        console.error("Decryption error:", error);
+                        alert("Decryption failed. See console for details. Make sure you use a 128 bit password: Fj$2Lm#9A!q3zRp*");
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+    
+        async function gcmEncryptForFile(data, password) {
+            const encodedPassword = new TextEncoder().encode(password);
+            const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            const encryptedData = await window.crypto.subtle.encrypt(
+                {
+                    name: 'AES-GCM',
+                    iv: iv
+                },
+                await window.crypto.subtle.importKey(
+                    'raw',
+                    encodedPassword,
+                    { name: 'AES-GCM' },
+                    false,
+                    ['encrypt']
+                ),
+                data
+            );
+            const encryptedArray = new Uint8Array(encryptedData);
+            const cipherText = new Uint8Array(iv.length + encryptedArray.length);
+            cipherText.set(iv, 0);
+            cipherText.set(encryptedArray, iv.length);
+            return cipherText;
+        }
+    
+        async function gcmDecryptForFile(data, password) {
+            const encodedPassword = new TextEncoder().encode(password);
+            const iv = data.slice(0, 12);
+            const encryptedData = data.slice(12);
+            const decryptedData = await window.crypto.subtle.decrypt(
+                {
+                    name: 'AES-GCM',
+                    iv: iv
+                },
+                await window.crypto.subtle.importKey(
+                    'raw',
+                    encodedPassword,
+                    { name: 'AES-GCM' },
+                    false,
+                    ['decrypt']
+                ),
+                encryptedData
+            );
+            return new Uint8Array(decryptedData);
+        }
+    
+        function updateDownloadLink(blob, filename) {
+            const downloadLink = document.getElementById('downloadLink');
+            const url = URL.createObjectURL(blob);
+            downloadLink.href = url;
+            downloadLink.download = filename;
+            downloadLink.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

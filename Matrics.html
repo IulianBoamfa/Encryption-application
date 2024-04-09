@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrics and Stats</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+            background: url('menu_background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chart-container {
+            margin: 20px;
+            width: 400px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .summary-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="chartContainer"></div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          const chartContainer = document.getElementById('chartContainer');
+  
+          // Retrieve data for Caesar Cypher from local storage
+          const caesarData = JSON.parse(localStorage.getItem('Caesar_Cypher'));
+          console.log("Caesar Cypher data:", caesarData);
+          // Calculate and display average time for Caesar Cypher
+          calculateAndDisplayAverageTimeForCypher(caesarData, 'Caesar Cypher');
+  
+          // Retrieve data for OTP Cypher from local storage
+          const otpData = JSON.parse(localStorage.getItem('OTP_Cypher'));
+          console.log("OTP Cypher data:", otpData);
+          // Calculate and display average time for OTP Cypher
+          calculateAndDisplayAverageTimeForCypher(otpData, 'OTP Cypher');
+  
+          // Retrieve data for XOR Cypher from local storage
+          const xorData = JSON.parse(localStorage.getItem('XOR_Cypher'));
+          console.log("XOR Cypher data:", xorData);
+          // Calculate and display average time for XOR Cypher
+          calculateAndDisplayAverageTimeForCypher(xorData, 'XOR Cypher');
+  
+          // Retrieve data for DES Cypher from local storage
+          const desData = JSON.parse(localStorage.getItem('DES_Cypher'));
+          console.log("DES Cypher data:", desData);
+          // Calculate and display average time for DES Cypher
+          calculateAndDisplayAverageTimeForCypher(desData, 'DES Cypher');
+  
+          // Retrieve data for RC4 Cypher from local storage
+          const rc4Data = JSON.parse(localStorage.getItem('RC4_Cypher'));
+          console.log("RC4 Cypher data:", rc4Data);
+          // Calculate and display average time for RC4 Cypher
+          calculateAndDisplayAverageTimeForCypher(rc4Data, 'RC4 Cypher');
+  
+  
+          // Retrieve data for GCM Cipher from local storage
+          const gcmData = JSON.parse(localStorage.getItem('GCM_Algorithm'));
+          console.log("GCM Cipher data:", gcmData);
+          // Calculate and display average time for GCM Cipher
+          calculateAndDisplayAverageTimeForCypher(gcmData, 'GCM Cipher');
+  
+          // Retrieve data for RSA Cypher from local storage
+          const rsaData = JSON.parse(localStorage.getItem('RSA_Cypher'));
+          console.log("RSA Cypher data:", rsaData);
+          // Calculate and display average time for RSA Cypher
+          calculateAndDisplayAverageTimeForCypher(rsaData, 'RSA Cypher');
+  
+          function calculateAndDisplayAverageTimeForCypher(data, cypherTitle) {
+              if (data) {
+                  // Initialize variables to store total time for text encryption and decryption
+                  let textEncryptTime = [];
+                  let textDecryptTime = [];
+                  let fileEncryptTime = [];
+                  let fileDecryptTime = [];
+  
+                  // Iterate through the data
+                  data.forEach(entry => {
+                      if (entry.method === 'Text' && entry.action === 'encrypt') {
+                          textEncryptTime.push(entry.time);
+                      } else if (entry.method === 'Text' && entry.action === 'decrypt') {
+                          textDecryptTime.push(entry.time);
+                      } else if (entry.method === 'File' && entry.action === 'encrypt') {
+                          fileEncryptTime.push(entry.time);
+                      } else if (entry.method === 'File' && entry.action === 'decrypt') {
+                          fileDecryptTime.push(entry.time);
+                      }
+                  });
+  
+                  // Sort the time arrays
+                  textEncryptTime.sort((a, b) => a - b);
+                  textDecryptTime.sort((a, b) => a - b);
+                  fileEncryptTime.sort((a, b) => a - b);
+                  fileDecryptTime.sort((a, b) => a - b);
+  
+                  // Calculate average time for text and file encryption and decryption
+                  const averageTextEncryptTime = calculateAverage(textEncryptTime);
+                  const averageTextDecryptTime = calculateAverage(textDecryptTime);
+                  const averageFileEncryptTime = calculateAverage(fileEncryptTime);
+                  const averageFileDecryptTime = calculateAverage(fileDecryptTime);
+  
+                  // Update chart with average times
+                  updateChartWithAverageTimes(cypherTitle, averageTextEncryptTime, averageTextDecryptTime, averageFileEncryptTime, averageFileDecryptTime);
+  
+                  // Update summary box with average times
+                  updateSummaryBox(cypherTitle, averageTextEncryptTime, averageTextDecryptTime, averageFileEncryptTime, averageFileDecryptTime);
+              } else {
+                  console.log(`No data found for ${cypherTitle}`);
+              }
+          }
+  
+          // Helper function to calculate average
+          function calculateAverage(times) {
+              if (times.length === 0) {
+                  return 0;
+              }
+              const sum = times.reduce((acc, val) => acc + val, 0);
+              return sum / times.length;
+          }
+  
+          // Function to update chart with average times
+          function updateChartWithAverageTimes(method, avgEncryptTextTime, avgDecryptTextTime, avgEncryptFileTime, avgDecryptFileTime) {
+              // Create chart canvas
+              const canvas = document.createElement('canvas');
+              canvas.width = 400;
+              canvas.height = 300;
+              const ctx = canvas.getContext('2d');
+  
+              // Create chart
+              let labels = ['Encrypt TEXT', 'Decrypt TEXT', 'Encrypt FILE', 'Decrypt FILE'];
+              let data = [avgEncryptTextTime, avgDecryptTextTime, avgEncryptFileTime, avgDecryptFileTime];
+              if (method === 'Caesar Cypher' || method === 'OTP Cypher') {
+                  labels = ['Encrypt TEXT', 'Decrypt TEXT'];
+                  data = [avgEncryptTextTime, avgDecryptTextTime];
+              }
+              new Chart(ctx, {
+                  type: 'bar',
+                  data: {
+                      labels: labels,
+                      datasets: [{
+                          label: 'Average time (ms)',
+                          data: data,
+                          backgroundColor: ['blue', 'blue', 'blue', 'blue'],
+                          borderWidth: 1
+                      }]
+                  },
+                  options: {
+                      plugins: {
+                          annotation: {
+                              annotations: [{
+                                  type: 'line',
+                                  mode: 'horizontal',
+                                  scaleID: 'y',
+                                  value: avgEncryptTextTime,
+                                  borderColor: 'blue',
+                                  borderWidth: 1,
+                                  label: {
+                                      enabled: true,
+                                      content: avgEncryptTextTime.toFixed(2) + ' ms',
+                                      position: 'center'
+                                  }
+                              }, {
+                                  type: 'line',
+                                  mode: 'horizontal',
+                                  scaleID: 'y',
+                                  value: avgDecryptTextTime,
+                                  borderColor: 'red',
+                                  borderWidth: 1,
+                                  label: {
+                                      enabled: true,
+                                      content: avgDecryptTextTime.toFixed(2) + ' ms',
+                                      position: 'center'
+                                  }
+                              }, {
+                                  type: 'line',
+                                  mode: 'horizontal',
+                                  scaleID: 'y',
+                                  value: avgEncryptFileTime,
+                                  borderColor: 'green',
+                                  borderWidth: 1,
+                                  label: {
+                                      enabled: true,
+                                      content: avgEncryptFileTime.toFixed(2) + ' ms',
+                                      position: 'center'
+                                  }
+                              }, {
+                                  type: 'line',
+                                  mode: 'horizontal',
+                                  scaleID: 'y',
+                                  value: avgDecryptFileTime,
+                                  borderColor: 'orange',
+                                  borderWidth: 1,
+                                  label: {
+                                      enabled: true,
+                                      content: avgDecryptFileTime.toFixed(2) + ' ms',
+                                      position: 'center'
+                                  }
+                              }]
+                          }
+                      },
+                      scales: {
+                          y: {
+                              beginAtZero: true,
+                              title: {
+                                  display: true,
+                                  text: 'Time (ms)',
+                                  color: 'white', // Set text color to white
+                                  font: {
+                                      weight: 'bold' // Set text weight to bold
+                                  }
+                              },
+                              ticks: {
+                                  color: 'white' // Set ticks color to white
+                              }
+                          },
+                          x: {
+                              title: {
+                                  display: true,
+                                  text: 'Action',
+                                  align: 'center',
+                                  color: 'white', // Set text color to white
+                                  font: {
+                                      weight: 'bold' // Set text weight to bold
+                                  }
+                              },
+                              ticks: {
+                                  color: 'white' // Set ticks color to white
+                              }
+                          }
+                      }
+                  }
+              });
+  
+              // Create container for the chart
+              const chartDiv = document.createElement('div');
+              chartDiv.classList.add('chart-container');
+              chartDiv.appendChild(canvas);
+  
+              // Create title for the chart
+              const title = document.createElement('h2');
+              title.textContent = method;
+              chartDiv.insertBefore(title, canvas);
+  
+              // Append chart to the chart container
+              chartContainer.appendChild(chartDiv);
+          }
+  
+          // Function to update summary box with average times
+          function updateSummaryBox(method, avgEncryptTextTime, avgDecryptTextTime, avgEncryptFileTime, avgDecryptFileTime) {
+              // Create summary box
+              const summaryBox = document.createElement('div');
+              summaryBox.classList.add('summary-box');
+              let summaryContent = `
+                  <h3>Summary for ${method}</h3>
+                  <p><strong>Encrypt TEXT:</strong> ${avgEncryptTextTime.toFixed(2)} ms</p>
+                  <p><strong>Decrypt TEXT:</strong> ${avgDecryptTextTime.toFixed(2)} ms</p>`;
+              if (method !== 'Caesar Cypher' && method !== 'OTP Cypher') {
+                  summaryContent += `
+                      <p><strong>Encrypt FILE:</strong> ${avgEncryptFileTime.toFixed(2)} ms</p>
+                      <p><strong>Decrypt FILE:</strong> ${avgDecryptFileTime.toFixed(2)} ms</p>`;
+              }
+              summaryBox.innerHTML = summaryContent;
+  
+              // Append summary box to the chart container
+              chartContainer.appendChild(summaryBox);
+          }
+      });
+  </script>
+  
+</body>
+</html>

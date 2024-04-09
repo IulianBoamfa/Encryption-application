@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XOR Cipher Example</title>
+    <style>
+        body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #FFFFFF;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: url('menu_background.jpg') no-repeat center center fixed;
+    background-size: cover;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 10px;
+    padding: 40px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    margin: 20px auto;
+}
+
+
+
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: calc(100% - 22px);
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4A00E0;
+            color: #FFFFFF;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #2c007d;
+        }
+
+        p {
+            margin-top: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .download-button {
+            margin-top: 10px;
+        }
+
+        .chart-container {
+    margin-top: 50px; /* Reduce margin at the top */
+    margin: 50px 20px; /* Adjusted margin */
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.5);
+    overflow-y: auto;
+    height: 500px;
+    width: 800px;
+}
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>XOR Cipher Example</h1>
+        <!-- Text input field for text input -->
+        <label for="message">Message:</label>
+        <input type="text" id="message"><br>
+        
+        <!-- Text input field for numeric key -->
+        <label for="key">Numeric Key:</label>
+        <input type="text" id="key"><br>
+        
+        <!-- File input field for uploading files -->
+        <input type="file" id="fileInput"><br>
+        
+        <!-- Buttons for encryption and decryption -->
+        <button onclick="encryptText()">Encrypt Text</button>
+        <button onclick="decryptText()">Decrypt Text</button>
+        <button onclick="encryptFile()">Encrypt File</button>
+        <button onclick="decryptFile()">Decrypt File</button>
+        
+        <!-- Result display -->
+        <p id="result"></p>
+        <a id="downloadLink" class="download-button" style="display: none;" download>
+            <button class="download-button">Download File</button>
+        </a>
+    </div>
+    <!-- Graph Container -->
+    <div class="chart-container">
+        <canvas id="performanceChart"></canvas>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let encryptionTimes = [];
+        let decryptionTimes = [];
+        let operationLabels = [];
+    
+        function updateGraph(operation, time) {
+            operationLabels.push(operation);
+            if (operation.includes('Encrypt Text') || operation.includes('Encrypt File')) {
+                encryptionTimes.push(time);
+            } else {
+                decryptionTimes.push(time);
+            }
+            performanceChart.data.labels = operationLabels;
+            performanceChart.data.datasets[0].data = encryptionTimes;
+            performanceChart.data.datasets[1].data = decryptionTimes;
+            performanceChart.update();
+            
+        }
+    
+        function showDownloadLink(content, action) {
+    const downloadLink = document.getElementById('downloadLink');
+    downloadLink.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    if (action === 'encrypt') {
+        downloadLink.download = 'encrypted_text.txt';
+    } else if (action === 'decrypt') {
+        downloadLink.download = 'decrypted_text.txt';
+    }
+    downloadLink.style.display = 'block';
+}
+
+
+
+    
+        
+    
+        function xorCipherText(data, key) {
+            let result = '';
+            for (let i = 0; i < data.length; i++) {
+                const charCode = data.charCodeAt(i);
+                const keyChar = key.charCodeAt(i % key.length);
+                result += String.fromCharCode(charCode ^ keyChar);
+            }
+            return result;
+        }
+    
+        function xorCipherFile(data, key) {
+            const encryptedData = new Uint8Array(data.length);
+            for (let i = 0; i < data.length; i++) {
+                encryptedData[i] = data[i] ^ key.charCodeAt(i % key.length);
+            }
+            return encryptedData;
+        }
+    
+        function encryptText() {
+    const startTime = performance.now();
+    const message = document.getElementById('message').value;
+    const key = document.getElementById('key').value;
+    const encryptedMessage = xorCipherText(message, key);
+    const endTime = performance.now();
+    const executionTime = endTime - startTime;
+    updateGraph('Encrypt Text', executionTime); 
+    document.getElementById('result').innerText = 'Encrypted Text: ' + encryptedMessage;
+    showDownloadLink(encryptedMessage, 'encrypt');
+
+    // Log and save data
+    const logEntry = {
+        method: 'Text',
+        action: 'encrypt',
+        time: executionTime
+    };
+    saveLogEntry(logEntry);
+}
+
+function decryptText() {
+    const startTime = performance.now();
+    const message = document.getElementById('message').value;
+    const key = document.getElementById('key').value;
+    const decryptedMessage = xorCipherText(message, key);
+    const endTime = performance.now();
+    const executionTime = endTime - startTime;
+    updateGraph('Decrypt Text', executionTime);
+    document.getElementById('result').innerText = 'Decrypted Text: ' + decryptedMessage;
+    showDownloadLink(decryptedMessage, 'decrypt');
+
+    // Log and save data
+    const logEntry = {
+        method: 'Text',
+        action: 'decrypt',
+        time: executionTime
+    };
+    saveLogEntry(logEntry);
+}
+
+function encryptFile() {
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const startTime = performance.now();
+            const content = new Uint8Array(event.target.result);
+            const key = document.getElementById('key').value;
+            const encryptedContent = xorCipherFile(content, key);
+            const endTime = performance.now();
+            const executionTime = endTime - startTime;
+            updateGraph('Encrypt File', executionTime);
+            
+            const blob = new Blob([encryptedContent], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const filename = file.name + '.encrypted';
+            document.getElementById('result').innerText = 'Encrypted File: ' + filename;
+            document.getElementById('downloadLink').href = url;
+            document.getElementById('downloadLink').download = filename;
+            document.getElementById('downloadLink').style.display = 'block';
+
+            // Log and save data
+            const logEntry = {
+                method: 'File',
+                action: 'encrypt',
+                time: executionTime
+            };
+            saveLogEntry(logEntry);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+    
+}
+
+function decryptFile() {
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const startTime = performance.now();
+            const content = new Uint8Array(event.target.result);
+            const key = document.getElementById('key').value;
+            const decryptedContent = xorCipherFile(content, key);
+            const endTime = performance.now();
+            const executionTime = endTime - startTime;
+            updateGraph('Decrypt File', executionTime);
+            
+            const blob = new Blob([decryptedContent], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const filename = file.name.replace('.encrypted', '');
+            document.getElementById('result').innerText = 'Decrypted File: ' + filename;
+            document.getElementById('downloadLink').href = url;
+            document.getElementById('downloadLink').download = filename;
+            document.getElementById('downloadLink').style.display = 'block';
+
+            // Log and save data
+            const logEntry = {
+                method: 'File',
+                action: 'decrypt',
+                time: executionTime
+            };
+            saveLogEntry(logEntry);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+    
+}
+function saveLogEntry(logEntry) {
+            // Retrieve existing log entries from local storage, or initialize an empty array if none exist
+            const logEntries = JSON.parse(localStorage.getItem('XOR_Cypher')) || [];
+            logEntries.push(logEntry);
+            localStorage.setItem('XOR_Cypher', JSON.stringify(logEntries));
+        }
+    
+       
+        let ctx = document.getElementById('performanceChart').getContext('2d');
+        let performanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: operationLabels,
+                datasets: [{
+                    label: 'Encryption Time (ms)',
+                    backgroundColor: 'rgb(54, 162, 235)', // Blue for encryption
+                    borderColor: 'rgb(54, 162, 235)', // Blue for encryption
+                    data: encryptionTimes,
+                    fill: false,
+                    tension: 0.1
+                }, {
+                    label: 'Decryption Time (ms)',
+                    backgroundColor: 'rgb(255, 99, 132)', // Red for decryption
+                    borderColor: 'rgb(255, 99, 132)', // Red for decryption
+                    data: decryptionTimes,
+                    fill: false,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Time (ms)',
+                            color: 'black'
+                        },
+                        ticks: {
+                            color: 'black'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Execution',
+                            color: 'black'
+                        },
+                        ticks: {
+                            color: 'black',
+                            callback: function(value, index, values) {
+                                return 'Execution ' + (index + 1);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'black'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Execution Time',
+                        color: 'black',
+                        font: {
+                            size: 18
+                        }
+                    }
+                }
+            }
+        });
+    
+        
+    </script>
+    
+    
+
+</body>
+</html>

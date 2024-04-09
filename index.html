@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Cybercrypt!</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        /* Fullscreen background */
+        .background-image {
+            position: fixed; /* Use fixed to cover the entire page */
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-image: url('Background_index.jpg'); /* Replace with your image path */
+            background-size: cover;
+            background-position: center;
+            z-index: -1; /* Ensure it stays behind other content */
+        }
+
+        /* Centering container */
+        .centered-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .welcome-container {
+            color: #FFF; /* Adjust for your image */
+            padding: 40px;
+            background-color: rgba(0, 0, 0, 0.75); /* Less transparency */
+            border-radius: 15px;
+            text-align: center; /* Center the message and button */
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.5); /* Add some shadow for depth */
+            z-index: 2; /* Ensure it's above the background image */
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.8rem; /* Slightly larger */
+        }
+
+        button {
+            font-size: 1.2rem;
+            padding: 15px 40px; /* Larger padding for a better appearance */
+            cursor: pointer;
+            background: linear-gradient(145deg, #007bff, #0056b3); /* Gradient background */
+            border: none;
+            border-radius: 5px;
+            color: white;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); /* Add some shadow to the button */
+            transition: background-color 0.3s, transform 0.2s; /* Smoother transitions */
+        }
+
+        button:hover, button:focus {
+            background: linear-gradient(145deg, #0056b3, #007bff); /* Invert gradient on hover/focus */
+            transform: translateY(-2px); /* Lift button slightly */
+            outline: none; /* Remove outline on focus */
+        }
+    </style>
+</head>
+<body>
+    <div class="background-image"></div> <!-- Background Image -->
+    <div class="centered-container">
+        <div class="welcome-container">
+            <h1>Cybercrypt</h1>
+            <h2>A concept fo peace and safety.</h2>
+            <button id="startButton">Let's begin...</button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('startButton').addEventListener('click', function() {
+    window.location.href = 'menu.html'; // Adjust the file name and path as needed
+});
+
+
+    </script>
+</body>
+</html>

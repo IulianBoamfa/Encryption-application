@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyed Hashing Algorithm</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('menu_background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: calc(100% - 22px);
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4A00E0;
+            color: #FFFFFF;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #2c007d;
+        }
+
+        p {
+            margin-top: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Keyed Hashing Algorithm</h1>
+        <!-- Text input field for text input -->
+        <label for="text">Text:</label>
+        <input type="text" id="text"><br>
+        
+        <!-- Text input field for key -->
+        <label for="key">Key:</label>
+        <input type="text" id="key"><br>
+        
+        <!-- File input field for uploading files -->
+        <input type="file" id="fileInput"><br>
+        
+        <!-- Button for generating hash -->
+        <button onclick="generateHash()">Generate Hash</button>
+        
+        <!-- Clear button to clear input fields and file selection -->
+        <button onclick="clearInputs()">Clear</button>
+        
+        <!-- Information button to display why decryption is not included -->
+        <button onclick="showInformation()">Information</button>
+        
+        <!-- Result display -->
+        <p id="result"></p>
+    </div>
+
+    <script>
+        async function generateHash() {
+            const text = document.getElementById('text').value;
+            const key = document.getElementById('key').value;
+
+            if (!text && !document.getElementById('fileInput').files[0]) {
+                alert('Please enter text or choose a file.');
+                return;
+            }
+
+            // Convert text and key to Uint8Array if text is provided
+            let textBytes;
+            if (text) {
+                textBytes = new TextEncoder().encode(text);
+            }
+
+            // Convert key to Uint8Array
+            const keyBytes = new TextEncoder().encode(key);
+
+            // Get file if provided
+            let fileBytes;
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const arrayBuffer = await readFileAsArrayBuffer(file);
+                fileBytes = new Uint8Array(arrayBuffer);
+            }
+
+            // Perform HMAC-SHA256 hash
+            const hashBytes = await hmacSha256(keyBytes, textBytes || fileBytes);
+
+            // Convert hash bytes to hex string
+            const hashHex = bytesToHex(hashBytes);
+
+            // Display the hash result
+            document.getElementById('result').innerHTML = "Hash: " + hashHex;
+        }
+
+        function clearInputs() {
+            document.getElementById('text').value = '';
+            document.getElementById('key').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('result').innerHTML = '';
+        }
+
+        function showInformation() {
+            alert("Decryption functionality is not included in this example because it's focused on keyed hashing, which is a one-way operation. Keyed hashing is commonly used for data integrity verification and authentication purposes.");
+        }
+
+        async function hmacSha256(key, message) {
+            const blockSize = 64; // HMAC block size (in bytes)
+            const hashSize = 32; // SHA-256 digest size (in bytes)
+
+            // Prepare the key
+            if (key.length > blockSize) {
+                key = await sha256(key);
+            } else if (key.length < blockSize) {
+                key = padKey(key);
+            }
+
+            // Compute inner padding and outer padding
+            const innerPadding = new Uint8Array(blockSize);
+            const outerPadding = new Uint8Array(blockSize);
+            for (let i = 0; i < blockSize; i++) {
+                innerPadding[i] = key[i] ^ 0x36;
+                outerPadding[i] = key[i] ^ 0x5C;
+            }
+
+            // Compute inner hash
+            let innerHash = new Uint8Array(innerPadding.length + message.length);
+            innerHash.set(innerPadding);
+            innerHash.set(message, innerPadding.length);
+            innerHash = await sha256(innerHash);
+
+            // Compute outer hash
+            let outerHash = new Uint8Array(outerPadding.length + hashSize);
+            outerHash.set(outerPadding);
+            outerHash.set(innerHash, outerPadding.length);
+            outerHash = await sha256(outerHash);
+
+            return outerHash;
+        }
+
+        function padKey(key) {
+            const paddedKey = new Uint8Array(64);
+            paddedKey.set(key);
+            return paddedKey;
+        }
+
+        async function sha256(message) {
+            const hashBuffer = await crypto.subtle.digest("SHA-256", message);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return new Uint8Array(hashArray);
+        }
+
+        function bytesToHex(bytes) {
+            const hexBytes = [];
+            for (let i = 0; i < bytes.length; i++) {
+                let hex = bytes[i].toString(16);
+                if (hex.length === 1) {
+                    hex = "0" + hex;
+                }
+                hexBytes.push(hex);
+            }
+            return hexBytes.join("");
+        }
+
+        function readFileAsArrayBuffer(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsArrayBuffer(file);
+            });
+        }
+    </script>
+</body>
+</html>

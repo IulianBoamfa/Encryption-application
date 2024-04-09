@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Encryption</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('menu_background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: calc(100% - 22px);
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4A00E0;
+            color: #FFFFFF;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #2c007d;
+        }
+
+        p {
+            margin-top: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .info-button {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Text Encryption</h1>
+        <!-- Input field for the message -->
+        <label for="message">Enter Message or Select File:</label>
+        <input type="text" id="message" placeholder="Enter text or select a file"><br>
+        
+        <!-- File input field for uploading files -->
+        <input type="file" id="fileInput"><br>
+        
+        <!-- Button for hashing -->
+        <button onclick="generateHash()">Generate Hash</button>
+        
+        <!-- Clear button to clear input fields and file selection -->
+        <button onclick="clearInputs()">Clear</button> <!-- Here is the added clear button -->
+        
+        <!-- Placeholder for displaying the result -->
+        <h3>Result:</h3>
+        <p id="result"></p>
+
+        <!-- Information button -->
+        <button class="info-button" onclick="showInformation()">Information</button>
+    </div>
+
+    <script>
+        // Function to generate hash from message or file
+        async function generateHash() {
+            const message = document.getElementById('message').value;
+            const fileInput = document.getElementById('fileInput');
+            let fileHash = '';
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileHash = await hashFile(file);
+            }
+
+            if (!message && !fileHash) {
+                alert('Please enter text or select a file.');
+                return;
+            }
+
+            try {
+                const hash = await hashWithWebCrypto(message || fileHash);
+                document.getElementById('result').innerText = 'Hash: ' + hash;
+            } catch (error) {
+                alert('Hashing failed: ' + error.message);
+            }
+        }
+
+        // Function to clear input fields and file selection
+        function clearInputs() {
+            document.getElementById('message').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('result').innerText = '';
+        }
+
+        // Hash function using Web Crypto API to perform a cryptographic hash (SHA-256)
+        async function hashWithWebCrypto(data) {
+            const encoder = new TextEncoder();
+            const encodedData = encoder.encode(data);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', encodedData);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        // Function to hash a file
+        async function hashFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    const hash = await hashWithWebCrypto(event.target.result);
+                    resolve(hash);
+                };
+                reader.onerror = error => reject(error);
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Function to display information about hashing
+        function showInformation() {
+            alert("This application generates a hash value using the SHA-256 hashing algorithm. It can accept either text input or file input. Once hashed, the original content cannot be retrieved from the hash value. Therefore, decryption is not possible with this hashing method.");
+        }
+    </script>
+</body>
+</html>

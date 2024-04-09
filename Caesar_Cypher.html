@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classic Cypher</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('menu_background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 10px;
+    padding: 40px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    height: auto; /* Adjust the height automatically based on content */
+    margin: 20px; /* Add space around the container */
+}
+
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-align: center;
+            color: #4A00E0;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        input[type="text"], input[type="number"] {
+            padding: 10px;
+            width: calc(100% - 22px);
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #8E2DE2;
+            color: #FFFFFF;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #7D2CC8;
+        }
+
+        #output, #analysisOutput {
+            margin-top: 15px;
+            color: #333;
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .output-group {
+            margin-top: 20px;
+            text-align: left;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .output-title {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .analysis-result {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .analysis-item {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .letter {
+            font-weight: bold;
+        }
+
+        .frequency {
+            color: #007bff;
+        }
+
+        
+
+        .chart-container {
+    margin-top: 20px; /* Add margin at the top */
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.5); /* Transparent white */
+    overflow-y: auto; /* Enable vertical scrolling */
+    height: 500px; /* Match the height of the other container */
+    width: 800px; /* Adjusted width to match the black container */
+}
+
+
+
+
+        #outputTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #outputTable td, #outputTable th {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        #outputTable th {
+            background-color: #f2f2f2; /* Light gray background for table headers */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Caesar Cipher Implementation</h1>
+        <div class="input-group">
+            <input type="text" id="inputText" placeholder="Enter text here">
+        </div>
+        <div class="input-group">
+            <input type="number" id="shift" placeholder="Shift" min="0" max="25">
+        </div>
+        <div>
+            <button onclick="encrypt()">Encrypt</button>
+            <button onclick="decrypt()">Decrypt</button>
+            <button onclick="analyzeFrequency()">Analyze Frequency</button>
+        </div>
+        <div id="output" class="output-group">
+            <div class="output-title">Output:</div>
+            <span></span>
+        </div>
+        <div id="analysisOutput" class="output-group">
+            <div class="output-title">Letter Frequency Analysis:</div>
+            <div class="analysis-result"></div>
+        </div>
+        
+    </div>
+    <div class="chart-container">
+        <canvas id="complexityChart" width="800" height="400"></canvas>
+    </div>
+
+    <script>
+        // Arrays to store execution time for encryption and decryption
+        const encryptionTimes = [];
+        const decryptionTimes = [];
+    
+        // Initialize the chart
+        const ctx = document.getElementById('complexityChart').getContext('2d');
+        const complexityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Encryption Time',
+                        data: [],
+                        borderColor: '#007bff', // Blue color for encryption
+                        borderWidth: 2,
+                        fill: false,
+                    },
+                    {
+                        label: 'Decryption Time',
+                        data: [],
+                        borderColor: '#dc3545', // Red color for decryption
+                        borderWidth: 2,
+                        fill: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Encryption and Decryption Execution Time',
+                        color: '#000000',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Execution',
+                            color: '#000000',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        ticks: {
+                            color: '#000000',
+                        },
+                        grid: {
+                            color: '#ddd'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Time (ms)',
+                            color: '#000000',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        ticks: {
+                            color: '#000000',
+                        },
+                        grid: {
+                            color: '#ddd'
+                        }
+                    }
+                }
+            }
+        });
+
+  
+
+        function encrypt() {
+    console.log('Encryption button clicked');
+    let startTime = performance.now(); // Record start time before encryption
+
+    let text = document.getElementById('inputText').value;
+    let shift = parseInt(document.getElementById('shift').value);
+    shift = shift % 26; // Ensure shift is within the alphabet range
+    let result = ''; // Initialize result variable
+
+    for (let i = 0; i < text.length; i++) {
+        let char = text[i];
+        if (char.match(/[a-z]/i)) {
+            let code = text.charCodeAt(i);
+            if (code >= 65 && code <= 90) {
+                char = String.fromCharCode(((code - 65 + shift) % 26) + 65);
+            } else if (code >= 97 && code <= 122) {
+                char = String.fromCharCode(((code - 97 + shift) % 26) + 97);
+            }
+        }
+        result += char; // Append encrypted character to result
+    }
+
+    let endTime = performance.now(); // Record end time after encryption
+    let executionTime = endTime - startTime; // Calculate execution time
+    encryptionTimes.push(executionTime); // Record execution time for encryption
+
+    document.getElementById('output').innerHTML = '<div class="output-title">Output:</div><span>' + result + '</span>';
+    console.log('Encryption Time:', executionTime);
+    updateGraph(); // Update the complexity graph
+
+    // Log and save data
+    const logEntry = {
+        method: 'Text',
+        action: 'encrypt',
+        time: executionTime
+    };
+    saveLogEntry(logEntry);
+}
+
+function decrypt() {
+    console.log('Decryption button clicked');
+    let startTime = performance.now(); // Record start time before decryption
+
+    let text = document.getElementById('inputText').value;
+    let shift = parseInt(document.getElementById('shift').value);
+    shift = shift % 26; // Ensure shift is within the alphabet range
+    let result = ''; // Initialize result variable
+
+    for (let i = 0; i < text.length; i++) {
+        let char = text[i];
+        if (char.match(/[a-z]/i)) {
+            let code = text.charCodeAt(i);
+            if (code >= 65 && code <= 90) {
+                // Uppercase letters
+                char = String.fromCharCode(((code - 65 - shift + 26) % 26) + 65);
+            } else if (code >= 97 && code <= 122) {
+                // Lowercase letters
+                char = String.fromCharCode(((code - 97 - shift + 26) % 26) + 97);
+            }
+        }
+        result += char; // Append decrypted character to result
+    }
+
+    let endTime = performance.now(); // Record end time after decryption
+    let executionTime = endTime - startTime; // Calculate execution time
+    decryptionTimes.push(executionTime); // Record execution time for decryption
+
+    document.getElementById('output').innerHTML = '<div class="output-title">Output:</div><span>' + result + '</span>';
+    console.log('Decryption Time:', executionTime);
+    updateGraph(); // Update the complexity graph
+
+    // Log and save data
+    const logEntry = {
+        method: 'Text',
+        action: 'decrypt',
+        time: executionTime
+    };
+    saveLogEntry(logEntry); 
+}
+
+function saveLogEntry(logEntry) {
+    // Retrieve existing log entries from local storage, or initialize an empty array if none exist
+    const logEntries = JSON.parse(localStorage.getItem('Caesar_Cypher')) || [];
+    logEntries.push(logEntry);
+    localStorage.setItem('Caesar_Cypher', JSON.stringify(logEntries));
+}
+
+
+        // Function to update the complexity graph with encryption and decryption times
+        function updateGraph() {
+            complexityChart.data.labels = Array.from(Array(Math.max(encryptionTimes.length, decryptionTimes.length)).keys());
+            complexityChart.data.datasets[0].data = encryptionTimes;
+            complexityChart.data.datasets[1].data = decryptionTimes;
+            complexityChart.update();
+        }
+        function analyzeFrequency() {
+    console.log('Frequency analysis button clicked');
+    let text = document.getElementById('inputText').value.toLowerCase(); // Convert text to lowercase
+    let frequencyMap = new Map(); // Create a map to store letter frequencies
+
+    // Loop through each character in the text
+    for (let char of text) {
+        // Check if the character is a letter
+        if (/[a-z]/.test(char)) {
+            // Increment the count for the current letter in the map
+            frequencyMap.set(char, frequencyMap.has(char) ? frequencyMap.get(char) + 1 : 1);
+        }
+    }
+
+    // Sort the map by frequency in descending order
+    let sortedFrequency = Array.from(frequencyMap.entries()).sort((a, b) => b[1] - a[1]);
+
+    // Generate HTML to display the frequency analysis
+    let analysisHTML = '<ul>';
+    sortedFrequency.forEach(item => {
+        analysisHTML += `<li class="analysis-item"><span class="letter">${item[0]}</span>: <span class="frequency">${item[1]}</span></li>`;
+    });
+    analysisHTML += '</ul>';
+
+    // Display the frequency analysis in the output area
+    document.getElementById('analysisOutput').innerHTML = `<div class="output-title">Letter Frequency Analysis:</div><div class="analysis-result">${analysisHTML}</div>`;
+}
+
+    </script>
+</body>
+</html>

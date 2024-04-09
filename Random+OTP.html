@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Random Number and One-Time Pad Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+            background: url('menu_background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 800px;
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        button, input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4A00E0;
+            color: #FFFFFF;
+            cursor: pointer;
+        }
+
+        input[type="text"] {
+            background-color: #FFFFFF; /* Set text box background color to white */
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #CCCCCC;
+            width: 100%; /* Ensure text boxes fill the container width */
+            color: #000000; /* Set text color to black */
+        }
+
+
+        button:hover {
+            background-color: #2c007d;
+        }
+
+        canvas {
+            width: 100%;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        #otpSection {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 40px;
+            width: 100%; /* Make the OTP section fill the container width */
+            max-width: 500px; /* Limit the OTP section's maximum width */
+            height: 92%; /* Set the OTP container height to 100% */
+        }
+
+        p {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%; /* Ensure result box fills the container width */
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Random Number Visualization</h2>
+        <button onclick="updateChart('cyclic')">Cyclic Random</button>
+        <button onclick="updateChart('standard')">Standard Random</button>
+        <button onclick="updateChart('unpredictable')">Unpredictable Random</button>
+        <canvas id="myChart"></canvas>
+    </div>
+
+    <!-- One-Time Pad Cipher Interface -->
+    <div id="otpSection" class="container">
+        <h2>One-Time Pad Cipher</h2>
+        <input type="text" id="inputText" placeholder="Enter text">
+        <input type="text" id="otpKey" placeholder="Key (leave empty to generate)">
+        <button onclick="generateOtpKey()">Generate Key</button>
+        <button onclick="otpEncrypt()">Encrypt</button>
+        <button onclick="otpDecrypt()">Decrypt</button>
+        <div class="result-box">
+            <div class="result-title">Results:</div>
+            <p id="otpOutput">Output will appear here</p>
+        </div>
+    </div>
+
+    <script>
+        // Random number generator functions
+        // Cyclic Number Generator
+        function cyclicNumberGenerator(seed, cycleLength) {
+            let current = seed;
+            return function() {
+                const result = current;
+                current = (current + 1) % cycleLength;
+                return result;
+            };
+        }
+
+        // Standard Random Function
+        function standardRandomGenerator() {
+            return Math.random();
+        }
+
+        // Unpredictable Sequence Generator
+        function unpredictableGenerator(seed) {
+            let current = seed;
+            return function() {
+                current = (current * 9301 + 49297) % 233280;
+                return current / 233280;
+            };
+        }
+
+        let myChart;
+
+        // Function to update chart
+        function updateChart(type) {
+            const numberOfPoints = 100;
+            let data = [];
+            let color;
+
+            switch(type) {
+                case 'cyclic':
+                    const cyclicGen = cyclicNumberGenerator(0, 10);
+                    for (let i = 0; i < numberOfPoints; i++) {
+                        data.push(cyclicGen());
+                    }
+                    color = 'red';
+                    break;
+                case 'standard':
+                    for (let i = 0; i < numberOfPoints; i++) {
+                        data.push(standardRandomGenerator());
+                    }
+                    color = 'blue';
+                    break;
+                case 'unpredictable':
+                    const unpredictableGen = unpredictableGenerator(12345);
+                    for (let i = 0; i < numberOfPoints; i++) {
+                        data.push(unpredictableGen());
+                    }
+                    color = 'green';
+                    break;
+            }
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+            if(myChart) {
+                myChart.destroy();
+            }
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: numberOfPoints}, (_, i) => i + 1),
+                    datasets: [{
+                        label: `${type} Data`,
+                        data: data,
+                        borderColor: color,
+                        borderWidth: 2,
+                        backgroundColor: 'rgba(255, 255, 255, 0.5)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    tooltips: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false
+                    },
+                    legend: {
+                        display: true
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutElastic'
+                    }
+                }
+            });
+        }
+
+        // One-Time Pad Cipher Functions
+        function generateOtpKey() {
+            let inputText = document.getElementById('inputText').value;
+            let keyBytes = new Uint8Array(inputText.length);
+            window.crypto.getRandomValues(keyBytes);
+            let key = btoa(String.fromCharCode.apply(null, keyBytes));
+            document.getElementById('otpKey').value = key;
+        }
+
+        function otpEncrypt() {
+            let text = document.getElementById('inputText').value;
+            let key = atob(document.getElementById('otpKey').value);
+            if (text.length !== key.length) {
+                alert('Key must be the same length as the text');
+                return;
+            }
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                let charCode = text.charCodeAt(i) ^ key.charCodeAt(i);
+                result += String.fromCharCode(charCode);
+            }
+            document.getElementById('otpOutput').textContent = 'Encrypted: ' + btoa(result);
+            
+        }
+
+        function otpDecrypt() {
+            let inputText = document.getElementById('inputText').value;
+            let key = atob(document.getElementById('otpKey').value);
+            let cipherText = atob(inputText); // Decode the input text (ciphertext)
+
+            // Retrieve the original length of the plaintext
+            let originalLength = cipherText.length;
+
+            if (originalLength !== key.length) { // Compare with the length of the original plaintext
+                alert('Key must be the same length as the text');
+                return;
+            }
+
+            let result = '';
+            for (let i = 0; i < cipherText.length; i++) {
+                let charCode = cipherText.charCodeAt(i) ^ key.charCodeAt(i);
+                result += String.fromCharCode(charCode);
+            }
+            document.getElementById('otpOutput').textContent = 'Decrypted: ' + result;
+        }
+
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateChart('cyclic');
+        });
+    </script>
+</body>
+</html>

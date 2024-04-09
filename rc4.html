@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RC4 Cipher Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('menu_background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 10px;
+    padding: 40px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    min-height: 600px; /* Minimum height to maintain layout */
+    margin: 20px; /* Add space around the container */
+    margin-left: 50px; /* Move the container more to the right */
+}
+
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        input[type="text"], input[type="file"] {
+            padding: 10px;
+            width: calc(100% - 22px);
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            width: calc(100% - 22px); /* Adjusted width */
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4A00E0;
+            color: #FFFFFF;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #2c007d;
+        }
+
+        p {
+            margin-top: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .download-button {
+            margin-top: 10px;
+        }
+
+        .chart-container {
+            margin-top: 20px; /* Add margin at the top */
+            margin-left: 20px; /* Add space between the containers */
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.5); /* Transparent white */
+            overflow-y: auto; /* Enable vertical scrolling */
+            height: 500px; /* Match the height of the other container */
+            width: 800px; /* Adjusted width to match the black container */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RC4 Cipher Example</h1>
+        <label for="message">Enter Message:</label>
+        <input type="text" id="message"><br>
+        
+        <label for="key">Enter Secret Key:</label>
+        <input type="text" id="key"><br>
+        <input type="file" id="uploadButton" onchange="handleFileUpload(event)" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px; background-color: #FFFFFF; color: #000000; width: calc(100% - 22px);"> <!-- Adjusted width -->
+
+        <button onclick="encryptText()">Encrypt Text</button>
+        <button onclick="decryptText()">Decrypt Text</button>
+        <button onclick="encryptFile()">Encrypt File</button>
+        <button onclick="decryptFile()">Decrypt File</button>
+        
+        <p id="result"></p>
+        
+        <a id="downloadLink" class="download-button" style="display: none;" download>
+            <button class="download-button">Download File</button>
+        </a>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="performanceChart"></canvas>
+    </div>
+
+    <script>
+        let encryptionTimes = [], decryptionTimes = [];
+        let operationLabels = [];
+        let operationCount = 0;
+
+        function updateGraph(operation, time) {
+            operationLabels.push(`Execution ${++operationCount}`);
+            if (operation === 'encrypt') {
+                encryptionTimes.push(time);
+            } else if (operation === 'decrypt') {
+                decryptionTimes.push(time);
+            }
+            window.performanceChart.data.labels = operationLabels;
+            window.performanceChart.data.datasets[0].data = encryptionTimes;
+            window.performanceChart.data.datasets[1].data = decryptionTimes;
+            window.performanceChart.update();
+        }
+
+        function saveLogEntry(logEntry) {
+            const logEntries = JSON.parse(localStorage.getItem('RC4_Cypher')) || [];
+            logEntries.push(logEntry);
+            localStorage.setItem('RC4_Cypher', JSON.stringify(logEntries));
+        }
+
+        function encryptText() {
+    const startTime = performance.now();
+    const message = document.getElementById('message').value;
+    const key = document.getElementById('key').value;
+    const encryptedMessage = rc4(key, message);
+    const endTime = performance.now();
+    
+    if (encryptedMessage !== undefined) {
+        updateGraph('encrypt', endTime - startTime);
+        document.getElementById('result').innerText = 'Encrypted Text: ' + encryptedMessage;
+        showDownloadLink(encryptedMessage);
+
+        const logEntry = {
+            method: 'Text',
+            action: 'encrypt',
+            time: endTime - startTime
+        };
+        saveLogEntry(logEntry);
+    } else {
+        document.getElementById('result').innerText = 'Error: Unable to encrypt text';
+    }
+}
+
+
+function decryptText() {
+    const startTime = performance.now();
+    const message = document.getElementById('message').value;
+    const key = document.getElementById('key').value;
+    const decryptedMessage = rc4(key, message);
+    const endTime = performance.now();
+    updateGraph('decrypt', endTime - startTime);
+    document.getElementById('result').innerText = decryptedMessage !== undefined ? 'Decrypted Text: ' + decryptedMessage : 'Error: Unable to decrypt text';
+    showDownloadLink(decryptedMessage);
+
+    const logEntry = {
+        method: 'Text',
+        action: 'decrypt',
+        time: endTime - startTime
+    };
+    saveLogEntry(logEntry);
+}
+
+
+function encryptFile() {
+    const fileInput = document.getElementById('uploadButton');
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const startTime = performance.now();
+            const content = event.target.result;
+            const key = document.getElementById('key').value;
+            const encryptedContent = rc4(key, content);
+            const endTime = performance.now();
+            updateGraph('encrypt', endTime - startTime);
+            const blob = new Blob([encryptedContent], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const filename = file.name + '.encrypted';
+            document.getElementById('result').innerText = 'Encrypted File: ' + filename;
+            document.getElementById('downloadLink').href = url;
+            document.getElementById('downloadLink').download = filename;
+            document.getElementById('downloadLink').style.display = 'block';
+
+            const logEntry = {
+                method: 'File',
+                action: 'encrypt',
+                time: endTime - startTime
+            };
+            saveLogEntry(logEntry);
+        };
+        reader.readAsBinaryString(file);
+    }
+}
+
+function decryptFile() {
+    const fileInput = document.getElementById('uploadButton');
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const startTime = performance.now();
+            const content = event.target.result;
+            const key = document.getElementById('key').value;
+            const decryptedContent = rc4(key, content);
+            const endTime = performance.now();
+            updateGraph('decrypt', endTime - startTime);
+            const blob = new Blob([decryptedContent], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const filename = file.name.replace('.encrypted', '');
+            document.getElementById('result').innerText = 'Decrypted File: ' + filename;
+            document.getElementById('downloadLink').href = url;
+            document.getElementById('downloadLink').download = filename;
+            document.getElementById('downloadLink').style.display = 'block';
+
+            const logEntry = {
+                method: 'File',
+                action: 'decrypt',
+                time: endTime - startTime
+            };
+            saveLogEntry(logEntry);
+        };
+        reader.readAsBinaryString(file);
+    }
+}
+
+
+        function showDownloadLink(data) {
+            const downloadLink = document.getElementById('downloadLink');
+            downloadLink.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(data);
+            downloadLink.style.display = 'block';
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const fileContent = event.target.result;
+                console.log('Uploaded file content:', fileContent);
+            };
+            reader.readAsText(file);
+        }
+
+        function rc4(key, message) {
+            const S = [];
+            for (let i = 0; i < 256; i++) {
+                S[i] = i;
+            }
+
+            let j = 0;
+            for (let i = 0; i < 256; i++) {
+                j = (j + S[i] + key.charCodeAt(i % key.length)) % 256;
+                [S[i], S[j]] = [S[j], S[i]];
+            }
+
+            let i = 0;
+            j = 0;
+            const result = [];
+            for (let k = 0; k < message.length; k++) {
+                i = (i + 1) % 256;
+                j = (j + S[i]) % 256;
+                [S[i], S[j]] = [S[j], S[i]];
+                const keyByte = S[(S[i] + S[j]) % 256];
+                const messageByte = message.charCodeAt(k);
+                const resultByte = keyByte ^ messageByte;
+                result.push(String.fromCharCode(resultByte));
+            }
+
+            return result.join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            window.performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: operationLabels,
+                    datasets: [{
+                        label: 'Encryption Time (ms)',
+                        data: encryptionTimes,
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    }, {
+                        label: 'Decryption Time (ms)',
+                        data: decryptionTimes,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Time (ms)',
+                                color: 'black'
+                            },
+                            ticks: {
+                                color: 'black'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Execution',
+                                color: 'black'
+                            },
+                            ticks: {
+                                color: 'black',
+                                callback: function(value, index, values) {
+                                    return 'Execution ' + (index + 1);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'black'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Execution Time',
+                            color: 'black',
+                            font: {
+                                size: 18
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

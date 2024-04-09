@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encryption Method Selection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('menu_background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .encryption-methods {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .encryption-method {
+            padding: 20px 40px;
+            background-color: #4A00E0;
+            color: #FFFFFF;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .encryption-method:hover {
+            background-color: #2c007d;
+        }
+
+        .metrics-button {
+            padding: 15px 30px;
+            background-color: #8E2DE2;
+            color: #FFFFFF;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        .metrics-button:hover {
+            background-color: #7D2CC8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Select an Encryption Method</h1>
+        <div class="encryption-methods">
+            <button class="encryption-method" onclick="selectMethod('Classic Cipher')">Classic Cipher</button>
+            <button class="encryption-method" onclick="selectMethod('One-Time Pad')">One-Time Pad</button>
+            <button class="encryption-method" onclick="selectMethod('Random Numbers')">Random Numbers + OTP</button>
+            <button class="encryption-method" onclick="selectMethod('Bit-wise XOR Cipher')">Bit-wise XOR Cipher</button>
+            <button class="encryption-method" onclick="selectMethod('DES Block Cipher')">DES Block Cipher</button>
+            <button class="encryption-method" onclick="selectMethod('Bit-wise Stream Cipher')">Bit-wise Stream Cipher(RC4)</button>
+            <button class="encryption-method" onclick="selectMethod('Hash Functions')">Hash Functions</button>
+            <button class="encryption-method" onclick="selectMethod('Keyed Hash')">Keyed Hash</button>
+            <button class="encryption-method" onclick="selectMethod('Authenticated Encryption (GCM)')">Authenticated Encryption (GCM)</button>
+            <button class="encryption-method" onclick="selectMethod('RSA Encryption')">RSA Encryption</button>
+            <!-- Add more encryption methods as needed -->
+        </div>
+        <button class="metrics-button" onclick="showMetrics()">Metrics and Statistics</button>
+    </div>
+
+    <script>
+         
+         
+    function selectMethod(methodName) {
+        if (methodName === 'Classic Cipher') {
+            window.location.href = 'Caesar_Cypher.html';
+        } else if (methodName === 'One-Time Pad') {
+            window.location.href = 'OTP_Crypto.html';
+        } else if (methodName === 'Random Numbers') {
+            window.location.href = 'Random+OTP.html'; 
+        } else if (methodName === 'Bit-wise XOR Cipher') {
+            window.location.href = 'XOR.html';
+        } else if (methodName === 'DES Block Cipher') {
+            window.location.href = 'DES.html';
+        } else if (methodName === 'Bit-wise Stream Cipher') {
+            window.location.href = 'rc4.html';
+        } else if (methodName === 'Hash Functions') {
+            window.location.href = 'CRC.html';
+        } else if (methodName === 'Keyed Hash') {
+            window.location.href = 'KEYED.html';
+        } else if (methodName === 'Authenticated Encryption (GCM)') {
+            window.location.href = 'GCM.html';
+        } else if (methodName === 'RSA Encryption') {
+            window.location.href = 'RSA.html';
+        } else {
+            // Redirect to a different page for other methods
+            alert(`You selected: ${methodName}`);
+        }
+    }
+
+    function showMetrics() {
+        window.location.href = 'Matrics.html';
+    }
+</script>
+
+</body>
+</html>
